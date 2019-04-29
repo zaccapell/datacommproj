@@ -25,7 +25,7 @@ def handle(client):
     while True:
         msg = client.recv(buffer)
         if msg != bytes("(quit)", "utf8"):
-            broadcast(bytes(str(addresses[client]) + ": " + msg))
+            broadcast(bytes(str(addresses[client]) + ": " + str(msg), "utf8"))
         else:
             client.send(bytes("(quit)", "utf8"))
             client.close()
