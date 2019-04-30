@@ -21,22 +21,22 @@ def incoming():
 
 
 def handle(client):
-    broadcast(bytes(str(addresses[client]) + " has joined the chat", "utf8"))
+    broadcast(str(addresses[client]) + " has joined the chat", client)
     while True:
         msg = client.recv(buffer)
         if msg != bytes("(quit)", "utf8"):
-            broadcast(bytes(str(addresses[client]) + ": " + str(msg), "utf8"))
+            broadcast(str(addresses[client]) + ": " + str(msg), client)
         else:
             client.send(bytes("(quit)", "utf8"))
             client.close()
-            broadcast(bytes(str(addresses[client]) + "has left the room", "utf8"))
+            broadcast(str(addresses[client]) + "has left the room", client)
             del addresses[client]
             break
 
 
-def broadcast(msg):
+def broadcast(msg, client):
     for sock in addresses:
-        sock.send(bytes(str(msg), "utf8"))
+        sock.send(msg.encode())
 
 
 if __name__ == "__main__":
