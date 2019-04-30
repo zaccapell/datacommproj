@@ -1,5 +1,6 @@
 import socket
 import sys
+from threading import Thread
 
 host = str(sys.argv[1])
 port = int(sys.argv[2])
@@ -7,14 +8,22 @@ buffer = 1024
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server.connect((host, port))
 
+
+def receive():
+    while True:
+        msg = server.recv(1024)
+        msg = msg.decode()
+        print(msg)
+
+
 while True:
-    message = server.recv(buffer)
-    message = message.decode()
-    print(message)
-    message = input(str("Me > "))
-    if message == "(quit)":
-        message = "Leaving the Chat room"
+    rcv = Thread(target=receive)
+    rcv.start()
+    message = input()
+    if message == "!quit":
         server.send(message.encode())
-        print("\n")
+        print("Leaving room")
         break
     server.send(message.encode())
+
+exit()

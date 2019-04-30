@@ -1,8 +1,8 @@
 import socket
-import threading
+from threading import Thread
 import sys
 
-addresses = {}
+addresses = []
 
 host = str(sys.argv[1])
 port = int(sys.argv[2])
@@ -10,39 +10,37 @@ buffer = 1024
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server.bind((host, port))
 
+server.listen(10)
 
-def incoming():
+
+def client_thread(conn, addr):
+    conn.send("Welcome to the chat room".encode())
     while True:
-        client, addr = server.accept()
-        print(str(addr) + " has connected")
-        client.send(bytes("Welcome to the room!", "utf8"))
-        addresses[client] = addr
-        threading.Thread(target=handle(client)).start()
-
-
-def handle(client):
-    broadcast(str(addresses[client]) + " has joined the chat", client)
-    while True:
-        msg = client.recv(buffer)
-        if msg != bytes("(quit)", "utf8"):
-            broadcast(str(addresses[client]) + ": " + str(msg), client)
+        message = conn.recv(buffer)
+        msg = message.decode()
+        if msg != "!quit":
+            msg = str(addr[0]) + ": " + msg
+            print(msg)
+            broadcast(msg, conn)
         else:
-            client.send(bytes("(quit)", "utf8"))
-            client.close()
-            broadcast(str(addresses[client]) + "has left the room", client)
-            del addresses[client]
-            break
+            remove(conn)
 
 
-def broadcast(msg, client):
+def broadcast(msg, conn):
     for sock in addresses:
-        sock.send(msg.encode())
+        if sock != conn:
+            sock.send(msg.encode())
 
 
-if __name__ == "__main__":
-    server.listen(5)
+def remove(conn):
+    if conn in addresses:
+        addresses.remove(conn)
+        conn.close()
+
+
+while True:
     print("Waiting for connection...")
-    accept = threading.Thread(target=incoming())
-    accept.start()
-    accept.join()
-    server.close()
+    connection, address = server.accept()
+    addresses.append(connection)
+    broadcast(str(address[0]) + " has connected", connection)
+    Thread(target=client_thread, args=(connection,address)).start()
